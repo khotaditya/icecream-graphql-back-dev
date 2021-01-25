@@ -1,0 +1,7 @@
+{
+    "env": {
+        "MONGO_USER": "user1",
+        "MONGO_PASSWORD": "HQaMcmQEX8lNVl4l",
+        "MONGO_DB": "icecream-dev"
+    }
+}
