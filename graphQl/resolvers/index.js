@@ -2,12 +2,13 @@ const bcrypt = require('bcryptjs');
 
 const Icecream = require('../../models/icecream');
 const User = require('../../models/user');
+const Order = require('../../models/order');
 
 const getIcecreamByIds = async icecreamIds => {
     try{
         const getAllIc = await Icecream.find({ _id: { $in: icecreamIds } });
         //console.log(getAllIc);
-        getAllIc.map(icecream => {
+        return getAllIc.map(icecream => {
             return {
                 ...icecream._doc,
                 _id: icecream.id,
@@ -15,12 +16,23 @@ const getIcecreamByIds = async icecreamIds => {
                 orderby: getUserById.bind(this, icecream.orderby)
             };
         });
-        return getAllIc;
+        
     }catch(err){
         throw err;
     }
 }; 
 
+const singleIcecream = async icecreamId => {
+    try{
+        const icecream = await Icecream.findById(icecreamId);
+        return {
+            ...icecream._doc,
+            orderby: getUserById.bind(this, icecream.orderby)
+        }
+    }catch(err){
+        throw err;
+    }
+};
 const getUserById = async userId => {
     try{
         const getUser = await User.findById(userId);
@@ -49,6 +61,22 @@ module.exports = {
         }catch(err){
             console.log(err);
         };
+    },
+    orders: async () =>{
+        try{
+           const orders = await Order.find();
+           return orders.map(order => {
+               return {
+                   ...order._doc,
+                   user: getUserById.bind(this, order._doc.user),
+                   icecream: singleIcecream.bind(this, order._doc.icecream), 
+                   createdAt: new Date(order.createdAt).toISOString(),
+                   updatedAt: new Date(order.updatedAt).toISOString(),
+               };
+           }); 
+        }catch(err){
+            throw err;
+        }
     },
     users: async () =>{
         try{
@@ -91,7 +119,38 @@ module.exports = {
             throw err;
         }
     },
-    
+    orderIcecream: async args => {
+        try{
+            const getIcecream = await Icecream.findOne({_id: args.icecreamId}); 
+            const order = new Order({
+              user: '600ff0394a44d1593dc189e0',
+              icecream: getIcecream 
+           });
+           const result = await order.save();
+           return {
+                ...result._doc,
+                user: getUserById.bind(this, result._doc.user),
+                icecream: singleIcecream.bind(this, result._doc.icecream), 
+                createdAt: new Date(result._doc.createdAt).toISOString(),
+                updatedAt: new Date(result._doc.updatedAt).toISOString(),
+           } ;
+        }catch(err){
+            throw err;
+        }
+    },
+    cancelOrder: async args => {
+        try{
+            const order = await Order.findById(args.orderId).populate('icecream');
+            const icecream = {
+                ...order.icecream._doc,
+                orderby: getUserById.bind(this, order.icecream._doc.orderby)
+            };
+            await Order.deleteOne({ _id: args.orderId});
+            return icecream;
+        }catch(err){
+            throw err;
+        }
+    },
     createUser: async args => {
         try{
             const email = args.userInput.email;
