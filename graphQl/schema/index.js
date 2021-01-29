@@ -28,6 +28,11 @@ type User {
     password: String
     createIcecreams: [Icecream!]
 }
+type AuthData {
+    userId: ID!
+    token: String!
+    tokenExpiration: Int!
+}
 input IcecreamInput {
     flavor1: String!
     flavor2: String
@@ -46,6 +51,7 @@ type RootQuery {
     icecreams: [Icecream!]!
     users: [User!]!
     orders: [Order!]!
+    login(email: String!, password: String!): AuthData!
 }
 
 type RootMutation {
